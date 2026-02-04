@@ -1,5 +1,9 @@
 const express = require("express")
 const User = require("../models/user.model")
+const middleWare = require("../middleware/middleware")
+const jwt = require("jsonwebtoken")
+require("dotenv").config()
+const JWT_SECRET="User_Password"
 
 const routes = express.Router()
 
@@ -15,27 +19,47 @@ routes.post("/user_info",async(req,res)=>{
     try{
         const users = new User(req.body)
         const saveUser  = await users.save()
-        res.status(201).json({message:"Added User successfully",saveUser})
+        res.status(200).json({message:"Added User successfully",saveUser})
 
     }catch(error){
         res.status(500).json({error:error.message})
     }
 })
 
-routes.delete("/user/:id",async(req, res)=>{
+routes.get("/login",async(req,res)=>{
     try{
-        const id = req.params.id
-       
-        const userFound = await User.findByIdAndDelete(id)
-        if(! userFound){
-            return res.status(404).json({message:"User not founded"})
+        const {username, password} = req.body
+        const userExist = await User.findOne({username})
+        console.log(userExist)
+        if(!userExist){
+           return res.status(404).json({message:"User does not exist"})
         }
-        res.status(201).json({message: "User deleted successfully"})
+        const isPasswordMatch = userExist.password === password ? true: false
+        if(isPasswordMatch){
+            const token = jwt.sign({role:"user"},JWT_SECRET,{expiresIn:"24h"})
+            return res.json({token})
+            // return res.status(200).json({message:"Login successfully",user:userExist})
+        }else{
+            return res.status(401).json({message:"Password Invalid"})
+        }
     }catch(error){
         res.status(500).json({error: error.message})
     }
 })
-routes.put("/user/:id/updateData",async(req,res)=>{
+
+routes.delete("/user/:id",async(req, res)=>{
+    try{
+        const id = req.params.id
+        const userFound = await User.findByIdAndDelete(id)
+        if(! userFound){
+            return res.status(404).json({message:"User not founded"})
+        }
+        res.status(200).json({message: "User deleted successfully"})
+    }catch(error){
+        res.status(500).json({error: error.message})
+    }
+})
+routes.put("/user/:id/updateData",middleWare,async(req,res)=>{
     console.log(req.params.id)
     try {
         const data = req.body
