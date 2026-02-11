@@ -14,12 +14,12 @@ loginRoutes.post("/signup", async (req, res) => {
         const { username, password } = req.body
         const userExist = await User.findOne({ username })
         if (userExist) {
-            return res.status(400).json({ message: "User already signin" })
+            return res.status(400).json({ message: "User already exists." })
         }
         const hashedPass = await bcrypt.hash(password, 10)
         const newUser = await User({ username, password: hashedPass })
-        newUser.save()
-        res.status(201).json({ message: "User signup successful", newUser })
+        await newUser.save()
+        res.status(201).json({ message: "User signup successful",newUser})
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -31,10 +31,10 @@ loginRoutes.post("/login", async (req, res) => {
     try {
         const user = await User.findOne({ username })
         if (!user) {
-            return res.status(404).json({ message: `User does not exits` })
+            return res.status(400).json({ message: `Invalid user name and password.` })
         } else {
             const isMatch = await bcrypt.compare(password, user.password)
-            console.log(isMatch)
+            console.log(isMatch, user.password, password)
             if (isMatch) {
                 const token = jwt.sign({ userId: user._id, username: user.username, role: "user" }, JWT_SECRET, { expiresIn: "24h" })
                 return res.json({ token })
