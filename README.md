@@ -83,7 +83,7 @@ Mongoose populate & relations
 Authorization logic
 Production-style backend structure
 
-###Author
+### Author
 
 Pooja Gujwar
 Full Stack Developer (MERN)
